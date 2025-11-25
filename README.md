@@ -3,6 +3,7 @@ A RAG project purposely designed to read documents and answer user questions per
 
 ## Project Architecture
 
+```text
 [Your Papers] -> [Chunker] -> [Chunks] -> [Embeddings (MiniLM)] -> [FAISS Vector Store]
                                          ↑
                              [Your Question] -> [Retriever] -> [Top Chunks]
@@ -15,7 +16,7 @@ A RAG project purposely designed to read documents and answer user questions per
                                                              |
                                                              v
                                                          [Answer/UI]
-
+```
 
 ## Tools/Packages used
 
