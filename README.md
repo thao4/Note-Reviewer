@@ -29,5 +29,6 @@ A RAG project purposely designed to read documents and answer user questions per
 
 ## Installation Guide
 
+Python 3.11.3 is recommended to run this project.
 It is recommended to create a virtual environment before working/using this project. 
 After you create your virtual environment, run 'python3 -m pip install -r requirements.txt' to install the required python modules.
