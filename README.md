@@ -36,3 +36,4 @@ After you create your virtual environment, run 'python3 -m pip install -r requir
 # Usage
 
 To run the app, use 'python -m app'. A URL should appear in the terminal which you can access locally.
+To use the site, you upload a pdf of your choice and process the PDF. Once the PDF is loaded and processed successfully, you can ask any question which then a semantic query will look up the three most useful chunks of information in the PDF and pass it as prompt data to the LLMs. It will return a curated response or an 'I don't know'.

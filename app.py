@@ -6,9 +6,46 @@ import numpy as np
 import gradio as gr
 
 def app():
-    pdf = "PDFs/BrainPlot.pdf"
+    state = None
+    
+    def upload_and_process(pdf_file):
+        nonlocal state
+        state, message = process_pdf(pdf_file)
+        return message
+
+    def answer_question(question):
+        nonlocal state
+        if state is None:
+            return "Please upload and process a PDF file first."
+        response, state = query(question, state)
+        return response
+
+    with gr.Blocks() as demo:
+        gr.Markdown("# PDF Question Answering App")
+        
+        with gr.Row():
+            pdf_input = gr.File(label="Upload PDF", file_types=['.pdf'])
+            upload_button = gr.Button("Process PDF")
+        
+        output_message = gr.Textbox(label="Status", interactive=False)
+        
+        upload_button.click(upload_and_process, inputs=pdf_input, outputs=output_message)
+        
+        question_input = gr.Textbox(label="Enter your question here")
+        answer_button = gr.Button("Get Answer")
+        answer_output = gr.Textbox(label="Answer", interactive=False, lines=10, max_lines=30)
+        
+        answer_button.click(answer_question, inputs=question_input, outputs=answer_output)
+    
+    demo.launch()
+    
+def process_pdf(pdf_file):
+    if pdf_file is None:
+        return None, "Please upload a PDF file."
+    
+    # load + embed + index
     embedder = Embedder()
-    loader = Loader(pdf)
+    loader = Loader(pdf_file)
     model = LLMModel()
     
     text_chunks = loader.get_chunks()
@@ -17,30 +54,16 @@ def app():
     
     index = faiss.IndexFlatL2(dimension) 
     index.add(embedded_chunks)
-
+    
     state_data = {
         "text_chunks": text_chunks,
+        "embedded_chunks": embedded_chunks,
         "model": model,
         "index": index,
         "embedder": embedder
     }
+    return state_data, "PDF loaded and processed successfully."
 
-    demo = gr.Interface(
-        fn=query,
-        inputs=[
-            gr.Textbox(lines=2, placeholder="Enter your question here..."),
-            gr.State(state_data),
-        ],
-        outputs=[
-            gr.Textbox(label="Response", lines = 5, max_lines=30),
-            gr.State()
-        ],
-        title="Document Question Answering with LLMs",
-        description="Ask questions about the content of a PDF document."
-    )
-    
-    demo.launch()
-    
 def retrieve_chunks(question, index, chunks, embedder, k=3):
     query_vec = embedder.embed(question) # returns a (dimension,) shape
     query_vec = np.array(query_vec, dtype='float32').reshape(1, -1) # converts (dimension,) to (1, dimension) - this shape is required for FAISS

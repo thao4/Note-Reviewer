@@ -17,17 +17,42 @@ class Loader:
         self.overlap_ratio = overlap_ratio
         self.full_text = ""
         for page in self.file.pages:
-            text = page.extract_text()
+            raw_text = page.extract_text()
             
             # Verify if the page is not empty
-            if text:
-                self.full_text += text
+            if raw_text:
+                cleaned_text = self.clean_text(raw_text)
+                self.full_text += cleaned_text + ""
                 
         self.sentences = self.split_into_sentences()
         self.chunks = self.chunk_sentences()
 
     def get_full_text(self):
         return self.full_text
+    
+    def clean_text(self, text):
+        if not text:
+            return ""
+
+        # Remove weird unicode/control chars
+        text = re.sub(r'[\x00-\x1F\x7F]', ' ', text)
+
+        # Replace multi newlines/tabs with a single space
+        text = re.sub(r'[\n\r\t]+', ' ', text)
+
+        # Fix hyphenated line breaks: "exam-\nple" → "example"
+        text = re.sub(r'-\s+', '', text)
+
+        # Remove multiple spaces
+        text = re.sub(r'\s{2,}', ' ', text)
+
+        # Remove random non-breaking spaces
+        text = text.replace('\xa0', ' ')
+
+        # Trim
+        text = text.strip()
+
+        return text
     
     def split_into_sentences(self):
         # Splits the sentences in the text using lightweight regular expressions
