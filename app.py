@@ -4,6 +4,8 @@ from model import LLMModel
 import faiss
 import numpy as np
 import gradio as gr
+from ollama import chat
+from ollama import ChatResponse
 
 def app():
     state = None
@@ -81,10 +83,9 @@ def construct_prompt(question, retrieved_chunks):
     say "I don’t know".
     Context:
     {context_str}
-
-    Question: {question}
     """
-    return prompt
+    question = f"Question: {question}"
+    return prompt, question
 
 def query(question, state):
     text_chunks = state["text_chunks"]
@@ -94,9 +95,16 @@ def query(question, state):
     
     retrieved_chunks = retrieve_chunks(question, index, text_chunks, embedder)
     
-    prompt = construct_prompt(question, retrieved_chunks)
-    answer = model.generate_response(prompt) # this line is modular enough to swap out different LLMs
-    
+    prompt, question = construct_prompt(question, retrieved_chunks)
+    # answer = model.generate_response(prompt+"\n"+question) # this line is modular enough to swap out different LLMs
+    response: ChatResponse = chat(
+        model="deepseek-r1:8b",
+        messages=[
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": question}
+        ],
+    )
+    answer = response.message.content
     formatted = f"""Question: {question}
 Answer: {answer}
 Chunks used:
