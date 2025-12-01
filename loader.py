@@ -38,30 +38,38 @@ class Loader:
     def chunk_sentences(self):
         # Overlap allows additional context to be added to the chunks
         chunks = []
-        overlap_size = int(self.chunk_size * self.overlap_ratio)
+        current_chunk = []
+        current_length = 0
         
-        current_chunk = ""
+        # number of sentences to keep as overlap
+        overlap_sentence_count = 2
         
         for sentence in self.sentences:
+            sentence_length = len(sentence)
+            
             # If adding the sentence keeps us under the chunk size, then add it
-            if len(current_chunk) + len(sentence) + 1 <= self.chunk_size:
-                current_chunk += " " + sentence if current_chunk else sentence # compacted if/else statement that sets current_chunk to sentence if current_chunk is empty, else we just append
+            if current_length + sentence_length <= self.chunk_size:
+                current_chunk.append(sentence)
+                current_length += sentence_length
             else:
                 # Save current chunk
-                chunks.append(current_chunk.strip())
+                chunks.append(" ".join(current_chunk).strip())
                 
                 # Create overlap from the end of the previous chunk
-                if overlap_size > 0:
-                    current_chunk = current_chunk[-overlap_size:] # grabs the last couple of characters from the previous chunk
+                if overlap_sentence_count > 0:
+                    current_chunk = current_chunk[-overlap_sentence_count:] # grabs the last couple of sentences from the previous chunk
+                    current_length = sum(len(s) for s in current_chunk)
                 else:
-                    current_chunk = ""
+                    current_chunk = []
+                    current_length = 0
                 
                 # Add the new sentence (might already exceed size if long)
-                current_chunk += " " + sentence if current_chunk else sentence
+                current_chunk.append(sentence)
+                current_length += sentence_length
             
         # Add last chunk
-        if current_chunk.strip():
-            chunks.append(current_chunk.strip())
+        if current_chunk:
+            chunks.append(" ".join(current_chunk).strip())
         
         return chunks
     

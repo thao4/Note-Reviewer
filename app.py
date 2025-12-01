@@ -3,6 +3,7 @@ from loader import Loader
 from model import LLMModel
 import faiss
 import numpy as np
+import gradio as gr
 
 def app():
     pdf = "PDFs/BrainPlot.pdf"
@@ -16,14 +17,29 @@ def app():
     
     index = faiss.IndexFlatL2(dimension) 
     index.add(embedded_chunks)
-    
-    question = input("Enter a question")
-    retrieved_chunks = retrieve_chunks(question, index, text_chunks, embedder)
 
-    prompt = construct_prompt(question, retrieved_chunks)
-    response = model.generate_response(prompt)
-    print(prompt)
-    print(f"    Answer: {response}")
+    state_data = {
+        "text_chunks": text_chunks,
+        "model": model,
+        "index": index,
+        "embedder": embedder
+    }
+
+    demo = gr.Interface(
+        fn=query,
+        inputs=[
+            gr.Textbox(lines=2, placeholder="Enter your question here..."),
+            gr.State(state_data),
+        ],
+        outputs=[
+            gr.Textbox(label="Response", lines = 5, max_lines=30),
+            gr.State()
+        ],
+        title="Document Question Answering with LLMs",
+        description="Ask questions about the content of a PDF document."
+    )
+    
+    demo.launch()
     
 def retrieve_chunks(question, index, chunks, embedder, k=3):
     query_vec = embedder.embed(question) # returns a (dimension,) shape
@@ -46,6 +62,24 @@ def construct_prompt(question, retrieved_chunks):
     Question: {question}
     """
     return prompt
+
+def query(question, state):
+    text_chunks = state["text_chunks"]
+    model = state["model"]
+    index = state["index"]
+    embedder = state["embedder"]
+    
+    retrieved_chunks = retrieve_chunks(question, index, text_chunks, embedder)
+    
+    prompt = construct_prompt(question, retrieved_chunks)
+    answer = model.generate_response(prompt) # this line is modular enough to swap out different LLMs
+    
+    formatted = f"""Question: {question}
+Answer: {answer}
+Chunks used:
+{'\n---------------\n'.join(retrieved_chunks)}
+    """
+    return formatted, state
 
 if __name__ == "__main__":
     app()
