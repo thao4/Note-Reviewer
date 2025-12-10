@@ -24,7 +24,7 @@ A RAG project purposely designed to read documents and answer user questions per
 - Chunking - Custom Python Splitter
 - Embeddings - MiniLM from Sentence-Transformers (all-MiniLM-L6-v2)
 - Vector Database Store - FAISS (Good for local, free, simple vector search)
-- LLM Inference - Hugging Face Local Models (Ollama)
+- LLM Inference - Hugging Face Local Models (Ollama/Interoperable)
 - UI - Gradio (Testing RAG system)
 
 ## Installation Guide
